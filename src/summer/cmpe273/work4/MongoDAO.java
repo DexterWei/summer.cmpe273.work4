@@ -10,6 +10,7 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
 import com.mongodb.MongoException;
 import com.mongodb.WriteResult;
 import com.mongodb.util.JSON;
@@ -17,27 +18,43 @@ import com.mongodb.util.JSON;
 import java.util.Date;
 
 public class MongoDAO {
-	private static MongoClient client=null;
+	private static DB db = null;
+	private static MongoClient client = null;
 	
-	public static MongoClient Connect() throws UnknownHostException{
-		if(client!=null)
-			return client;
-		try{
-		client = new MongoClient("localhost" , 27017);
-		}catch(UnknownHostException ex){
-			System.err.println(ex);
-		}
-		return client;
+//	public static MongoClient Connect() throws UnknownHostException{
+//		if(client!=null)
+//			return client;
+//		try{
+//		client = new MongoClient("ds045031.mongolab.com" , 45031);
+//		}catch(UnknownHostException ex){
+//			System.err.println(ex);
+//		}
+//		return client;
+//	}
+	
+	public static void init(){
+        try {
+    		String textUri = "mongod://cmpe273team1:cmpe273@ds045031.mongolab.com:45031";
+    		MongoClientURI uri = new MongoClientURI(textUri);
+    		client = new MongoClient(uri);
+        } catch (final UnknownHostException e) {
+        	e.printStackTrace();
+        }
+        db = client.getDB("lwm2m");
 	}
 
 	public static void TryInsert(String from,String to,String message){
-        DB db = client.getDB("test");
+		if (db == null)
+			init();
+//        DB db = client.getDB("test");
         DBCollection msgs = db.getCollection("msgs");
         msgs.insert(new BasicDBObject("from",from).append("to",to).append("message",message));
 	}
 	
 	public static void InsertSubscriber(JSONObject obj) throws JSONException{
-		DB db = client.getDB("RegServer1");
+		if (db == null)
+			init();
+//		DB db = client.getDB("RegServer1");
 		try{
 			String maker = (String)obj.get("Manufacturer");
 			DBCollection clnt=db.getCollection(maker);
@@ -51,7 +68,9 @@ public class MongoDAO {
 	}
 	
 	public static boolean FindModel(String manufacturer,String model){
-		DB db=client.getDB("RegServer1");
+		if (db == null)
+			init();
+//		DB db=client.getDB("RegServer1");
 		DBCollection clnt = db.getCollection("inventory");
 		DBCursor rst = clnt.find(new BasicDBObject().append("Manufacturer", manufacturer).append("Model",model));
 		if(rst.count()==1){
@@ -62,7 +81,9 @@ public class MongoDAO {
 	}
 	
 	public static boolean FindSubscriber(JSONObject device) throws JSONException{
-		DB db=client.getDB("RegServer1");
+		if (db == null)
+			init();
+//		DB db=client.getDB("RegServer1");
 		String collection=(String) device.get("Manufacturer");
 		
 		DBCollection clnt= db.getCollection(collection);
@@ -82,7 +103,9 @@ public class MongoDAO {
 	}
 	
 	public static String UpdateSubscriber(JSONObject device) throws JSONException{
-		DB db=client.getDB("RegServer1");
+		if (db == null)
+			init();
+//		DB db=client.getDB("RegServer1");
 		String collection=(String) device.get("Manufacturer");
 		
 		DBCollection clnt= db.getCollection(collection);
@@ -105,7 +128,9 @@ public class MongoDAO {
 	}
 	
 	public static String DeregisterSubscriber(JSONObject device) throws JSONException{
-		DB db=client.getDB("RegServer1");
+		if (db == null)
+			init();
+//		DB db=client.getDB("RegServer1");
 		String collection=(String) device.get("Manufacturer");
 		
 		DBCollection clnt= db.getCollection(collection);
@@ -131,13 +156,4 @@ public class MongoDAO {
 		client.close();
 	}
 	
-	//only use main to test methods
-	public static void main(String[] args) throws UnknownHostException{
-		Connect();
-		TryInsert("sender","receiver","text");
-		TryInsert("sender","receiver","text");
-		TryInsert("sender","receiver","text");
-		TryInsert("sender","receiver","text");
-		DisConnect();
-	}
 }
